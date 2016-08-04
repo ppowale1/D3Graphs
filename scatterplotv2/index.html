@@ -3,9 +3,15 @@
 <html lang="en">
 	<head>
 		<meta charset="utf-8">
-	    <title>Scatterplot v2</title>
+	    <title>ADC Performance Survey</title>
 	    <link rel="stylesheet" href="css/style.css">
 	    <link rel="stylesheet" href="css/svg.css">
+	    <link href="css/tipsy.css" rel="stylesheet" type="text/css" />
+	    <script src="../D3/d3.min.js"></script>
+		<script src="js/underscore-min.js"></script>
+		<script type="text/javascript" src="http://code.jquery.com/jquery-1.6.2.min.js"></script> 
+    	<script type="text/javascript" src="js/jquery.tipsy.js"></script>
+		<script src="js/main.js"></script>
 	</head>
 
 	<body>
@@ -14,17 +20,20 @@
 			</div>
 
 			<div id="title">
-				<h1>Scatterplot v2</h1>
+				<h1>ADC Performance Survey</h1>
 			</div>
 
 			<div id="menu">
-<!-- 				<h2>&uarr; Y axis</h2>
-				<ul id="y-axis-menu"></ul>
-				<h2>&rarr; X axis</h2>
- -->				<ul id="x-axis-menu"></ul>
+				<h4>Y-Axis</h4>
+				<ul><select id="y-axis-menu"></select></ul>
+				<br/>
+				<h4>X-Axis</h4>
+				<ul><select id="x-axis-menu"></select></ul>
+				<br/>
+				<h4>Group</h4>
+				<ul><select id="group-menu"></select></ul>
+
 			</div>
 		</div>
 
-		<script src="../D3/d3.min.js"></script>
-		<script src="js/underscore-min.js"></script>
-		<script src="js/main.js"></script>
+

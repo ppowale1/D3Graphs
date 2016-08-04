@@ -1,36 +1,40 @@
-// HELPERS
-function parseData(d) {
-  var keys = _.keys(d[0]);
-  return _.map(d, function(d) {
+function parseAxisData(d,keysNum, keysStr) {
+  return _.map(d, function(d) { //return a list after performing function for each data in d
     var o = {};
-    _.each(keys, function(k) {
-      if( k == 'Country' )
-        o[k] = d[k];
-      else
+    _.each(keysNum, function(k) { // for each column which is a number
         o[k] = parseFloat(d[k]);
+    })
+    _.each(keysStr, function(k) { // for each column that is a string
+        o[k] = d[k];
     });
     return o;
   });
 }
 
+function createGroups(d,groupName) {
+  return new Set(_.map(d, function(d) {return d[groupName]}));  
+}
+
 function getBounds(d, paddingFactor) {
   // Find min and maxes (for the scales)
-  paddingFactor = typeof paddingFactor !== 'undefined' ? paddingFactor : 1;
+  paddingFactor = typeof paddingFactor !== 'undefined' ? paddingFactor : 1; //!== not equal value or type to string 'undefined'
 
   var keys = _.keys(d[0]), b = {};
-  keys = ["Year","RX_Energy", "RX_Speed"];
-  _.each(keys, function(k) {
+  //only num value keys
+  //var keys = keysNum, b = {};
+  _.each(keys, function(k) { //for each column
     b[k] = {};
-    _.each(d, function(d) {
+    _.each(d, function(d) { //for each row
       if(isNaN(d[k]))
         return;
-      if(b[k].min === undefined || d[k] < b[k].min)
+      if(b[k].min === undefined || d[k] < b[k].min) //look through rows, set bound for [key for that column]
         b[k].min = d[k];
+      
       if(b[k].max === undefined || d[k] > b[k].max)
         b[k].max = d[k];
     });
 
-    b[k].max > 0 ? b[k].max *= paddingFactor : b[k].max /= paddingFactor;
+    b[k].max > 0 ? b[k].max *= paddingFactor : b[k].max /= paddingFactor; //add a little padding
     b[k].min > 0 ? b[k].min /= paddingFactor : b[k].min *= paddingFactor;
   });
   return b;
@@ -63,25 +67,40 @@ function getCorrelation(xArray, yArray) {
   var m = ntor / dtorX; // y = mx + b
   var b = ( sumY - m * sumX ) / n;
 
-  // console.log(r, m, b);
   return {r: r, m: m, b: b};
 }
 
 d3.csv('data/Test.csv', function(data) {
 
-  var xAxis = 'Year', yAxis = 'RX_Speed';
-  //var xAxisOptions = []
-   var yAxisOptions = ["RX_Speed", "RX_Energy"];
-  var descriptions = {
-    "RX_Speed" : "RX_Speed",
-    "RX_Energy" : "RX_Energy"
-    
-  };
+//MAKE THIS BETTER
+  var keysNum = ["Year","RX_Energy", "RX_Speed"];
+  var keysStr = ["Affiliates","Authors"];
+   
+   var xAxisOptions = keysNum;
+   var yAxisOptions = keysNum;
+   var groupOptions = keysStr;
+   var xAxis = xAxisOptions[0], yAxis = yAxisOptions[1], group = groupOptions[0];
 
-  var keys = _.keys(data[0]);
-  keys = ["Year","RX_Energy", "RX_Speed"];
-  var data = parseData(data);
+   var descriptions = {
+    "RX_Speed" : "RX_Speed",
+    "RX_Energy" : "RX_Energy",
+    "Year" : "Year",
+    "Affiliates" : "Affiliates",
+    "Authors" : "Authors"
+  };
+  
+  var data = parseAxisData(data,keysNum,keysStr);
   var bounds = getBounds(data, 1);
+  var colors = ["#1abc9c","#e67e22","#9b59b6","#2980b9","#f1c40f","#27ae60","#c0392b","#34495e","#7f8c8d","#e74c3c","#16a085","#f39c12","#3498db","#95a5a6","#2ecc71"]; //supports up to 15 different groups
+
+  var groups = createGroups(data,group);
+  var groupColors={};
+  var k=0;
+  groups.forEach(function(d) {
+    groupColors[d]=colors[k];
+    k++;
+
+  });
 
   // SVG AND D3 STUFF
   var svg = d3.select("#chart")
@@ -95,41 +114,50 @@ d3.csv('data/Test.csv', function(data) {
     .attr('transform', 'translate(80, -60)');
 
   // Build menus
-  d3.select('#x-axis-menu')
-    .selectAll('li')
+  d3.select('#y-axis-menu')
+    .selectAll('option')
     .data(yAxisOptions)
     .enter()
-    .append('li')
+    .append('option')
     .text(function(d) {return d;})
-    .classed('selected', function(d) {
+    .property("selected", function(d) {
       return d === yAxis;
     })
     .on('click', function(d) {
       yAxis = d;
       updateChart();
-      updateMenus();
+      //updateMenus();
     });
 
-  // d3.select('#y-axis-menu')
-  //   .selectAll('li')
-  //   .data(yAxisOptions)
-  //   .enter()
-  //   .append('li')
-  //   .text(function(d) {return d;})
-  //   .classed('selected', function(d) {
-  //     return d === yAxis;
-  //   })
-  //   .on('click', function(d) {
-  //     yAxis = d;
-  //     updateChart();
-  //     updateMenus();
-  //   });
+    d3.select('#x-axis-menu')
+    .selectAll('option')
+    .data(yAxisOptions)
+    .enter()
+    .append('option')
+    .text(function(d) {return d;})
+    .property("selected",function(d) {
+      return d === xAxis;
+    })
+    .on('click', function(d) {
+      xAxis = d;
+      updateChart();
+      //updateMenus();
+    });
 
-  // Country name
-  d3.select('svg g.chart')
-    .append('text')
-    .attr({'id': 'countryLabel', 'x': 0, 'y': 170})
-    .style({'font-size': '80px', 'font-weight': 'bold', 'fill': '#ddd'});
+    d3.select('#group-menu')
+    .selectAll('option')
+    .data(groupOptions)
+    .enter()
+    .append('option')
+    .text(function(d) {return d;})
+    .property("selected",function(d) {
+      return d === group;
+    })
+    .on('click', function(d) {
+      group = d;
+      updateChart();
+      //updateMenus();
+    });
 
   // Best fit line (to appear behind points)
   d3.select('svg g.chart')
@@ -140,7 +168,7 @@ d3.csv('data/Test.csv', function(data) {
   d3.select('svg g.chart')
     .append('text')
     .attr({'id': 'xLabel', 'x': 400, 'y': 670, 'text-anchor': 'middle'})
-    .text('Year');
+    .text(descriptions[xAxis]);
 
   d3.select('svg g.chart')
     .append('text')
@@ -150,7 +178,6 @@ d3.csv('data/Test.csv', function(data) {
 
   // Render points
   updateScales();
-  var pointColour = d3.scale.category20b();
   d3.select('svg g.chart')
     .selectAll('circle')
     .data(data)
@@ -162,9 +189,9 @@ d3.csv('data/Test.csv', function(data) {
     .attr('cy', function(d) {
       return isNaN(d[yAxis]) ? d3.select(this).attr('cy') : yScale(d[yAxis]);
     })
-    .attr('fill', function(d, i) {return pointColour(i);})
+    .attr('r', 4)
     .style('cursor', 'pointer')
-    .on('mouseover', function(d) {
+    /*.on('mouseover', function(d) {
       d3.select('svg g.chart #countryLabel')
         .text(d.Country)
         .transition()
@@ -175,12 +202,24 @@ d3.csv('data/Test.csv', function(data) {
         .transition()
         .duration(1500)
         .style('opacity', 0);
-    });
+    })*/;
+    $('svg g.chart circle').each(function(){
+      $(this).tipsy({ 
+        gravity: 's', 
+        html: true, 
+        title: function() {
+          var d = this.__data__;
+          return d[group]; 
+        }
+      });
+  });
+    
 
   updateChart(true);
-  updateMenus();
+  //updateMenus();
 
   // Render axes
+  
   d3.select('svg g.chart')
     .append("g")
     .attr('transform', 'translate(0, 630)')
@@ -211,7 +250,7 @@ d3.csv('data/Test.csv', function(data) {
         return isNaN(d[yAxis]) ? d3.select(this).attr('cy') : yScale(d[yAxis]);
       })
       .attr('r', function(d) {
-        return isNaN(d[xAxis]) || isNaN(d[yAxis]) ? 0 : 12;
+        return isNaN(d[xAxis]) || isNaN(d[yAxis]) ? 0 : 8;
       });
 
     // Also update the axes
@@ -224,6 +263,8 @@ d3.csv('data/Test.csv', function(data) {
       .call(makeYAxis);
 
     // Update axis labels
+    d3.select('#yLabel')
+      .text(descriptions[yAxis]);
     d3.select('#xLabel')
       .text(descriptions[xAxis]);
 
@@ -234,6 +275,21 @@ d3.csv('data/Test.csv', function(data) {
     var x1 = xScale.domain()[0], y1 = c.m * x1 + c.b;
     var x2 = xScale.domain()[1], y2 = c.m * x2 + c.b;
 
+    //Update colors
+    d3.select('svg g.chart')
+    .selectAll('circle')
+    .attr('fill', function(d) {
+      var groups = createGroups(data,group);
+      var groupColors={};
+      var k=0;
+      groups.forEach(function(d) {
+        groupColors[d]=colors[k];
+        k++;
+
+      });
+      return groupColors[d[group]];
+    })
+
     // Fade in
     d3.select('#bestfit')
       .style('opacity', 0)
@@ -241,12 +297,14 @@ d3.csv('data/Test.csv', function(data) {
       .transition()
       .duration(1500)
       .style('opacity', 1);
+
   }
 
   function updateScales() {
     xScale = d3.scale.linear()
                     .domain([bounds[xAxis].min, bounds[xAxis].max])
                     .range([20, 780]);
+                    
 
     yScale = d3.scale.linear()
                     .domain([bounds[yAxis].min, bounds[yAxis].max])
@@ -256,26 +314,23 @@ d3.csv('data/Test.csv', function(data) {
   function makeXAxis(s) {
     s.call(d3.svg.axis()
       .scale(xScale)
-      .orient("bottom"));
+      .orient("bottom")
+      .tickFormat(d3.format("")));
   }
 
   function makeYAxis(s) {
     s.call(d3.svg.axis()
       .scale(yScale)
-      .orient("left"));
+      .orient("left")
+      .tickFormat(d3.format("")));
   }
 
-  function updateMenus() {
-    d3.select('#x-axis-menu')
-      .selectAll('li')
-      .classed('selected', function(d) {
-        return d === xAxis;
-      });
+  /*function updateMenus() {
     d3.select('#y-axis-menu')
       .selectAll('li')
       .classed('selected', function(d) {
         return d === yAxis;
     });
-  }
+  }*/
 
 })
