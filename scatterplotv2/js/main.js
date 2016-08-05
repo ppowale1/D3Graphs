@@ -1,4 +1,4 @@
-function parseAxisData(d,keysNum, keysStr) {
+function parseAxisData(d,keysNum, keysStr, keysMeta) {
   return _.map(d, function(d) { //return a list after performing function for each data in d
     var o = {};
     _.each(keysNum, function(k) { // for each column which is a number
@@ -7,6 +7,10 @@ function parseAxisData(d,keysNum, keysStr) {
     _.each(keysStr, function(k) { // for each column that is a string
         o[k] = d[k];
     });
+    _.each(keysMeta, function(k) { // for each column that is a string
+        o[k] = d[k];
+    });
+
     return o;
   });
 }
@@ -70,26 +74,18 @@ function getCorrelation(xArray, yArray) {
   return {r: r, m: m, b: b};
 }
 
-d3.csv('data/Test.csv', function(data) {
+d3.csv('data/Data.csv', function(data) {
 
-//MAKE THIS BETTER
-  var keysNum = ["Year","RX_Energy", "RX_Speed"];
-  var keysStr = ["Affiliates","Authors"];
+  var keysNum = ["YEAR","PD Capacitance (fF)", "NUMBER OF CHANNELS (Lambda)","TOTAL DATA RATE (Gbps)","DATA RATE PER LANE (Gbps)","TX POWER PER LANE (mW)","RX POWER PER LANE (mW)","TOTAL POWER PER LANE (mW)","TX E/B (fJ/b)","RX E/B (fJ/b)","TOTAL E/B (fJ/b)","RX SENSITIVITY (uA)","PD RESPONSIVITY (A/W)","CHIP AREA (mm^2)"];
+  var keysStr = ["JOURNAL/CONF","AFFILIATION","CHANNEL TYPE","MODULATION TYPE","TECHNOLOGY"];
+  var keysMeta = ["URL","TITLE","ABSTRACT"];
    
    var xAxisOptions = keysNum;
    var yAxisOptions = keysNum;
    var groupOptions = keysStr;
    var xAxis = xAxisOptions[0], yAxis = yAxisOptions[1], group = groupOptions[0];
-
-   var descriptions = {
-    "RX_Speed" : "RX_Speed",
-    "RX_Energy" : "RX_Energy",
-    "Year" : "Year",
-    "Affiliates" : "Affiliates",
-    "Authors" : "Authors"
-  };
   
-  var data = parseAxisData(data,keysNum,keysStr);
+  var data = parseAxisData(data,keysNum,keysStr,keysMeta);
   var bounds = getBounds(data, 1);
   var colors = ["#1abc9c","#e67e22","#9b59b6","#2980b9","#f1c40f","#27ae60","#c0392b","#34495e","#7f8c8d","#e74c3c","#16a085","#f39c12","#3498db","#95a5a6","#2ecc71"]; //supports up to 15 different groups
 
@@ -115,6 +111,10 @@ d3.csv('data/Test.csv', function(data) {
 
   // Build menus
   d3.select('#y-axis-menu')
+  .on('change', function() {
+      yAxis = this.value;
+      updateChart(1500);
+    })
     .selectAll('option')
     .data(yAxisOptions)
     .enter()
@@ -122,14 +122,13 @@ d3.csv('data/Test.csv', function(data) {
     .text(function(d) {return d;})
     .property("selected", function(d) {
       return d === yAxis;
-    })
-    .on('click', function(d) {
-      yAxis = d;
-      updateChart();
-      //updateMenus();
     });
 
     d3.select('#x-axis-menu')
+    .on('change', function() {
+      xAxis = this.value;
+      updateChart(1500);
+    })
     .selectAll('option')
     .data(yAxisOptions)
     .enter()
@@ -137,14 +136,13 @@ d3.csv('data/Test.csv', function(data) {
     .text(function(d) {return d;})
     .property("selected",function(d) {
       return d === xAxis;
-    })
-    .on('click', function(d) {
-      xAxis = d;
-      updateChart();
-      //updateMenus();
     });
 
     d3.select('#group-menu')
+    .on('change', function() {
+      group = this.value;
+      updateChart(0);
+    })
     .selectAll('option')
     .data(groupOptions)
     .enter()
@@ -153,11 +151,7 @@ d3.csv('data/Test.csv', function(data) {
     .property("selected",function(d) {
       return d === group;
     })
-    .on('click', function(d) {
-      group = d;
-      updateChart();
-      //updateMenus();
-    });
+    
 
   // Best fit line (to appear behind points)
   d3.select('svg g.chart')
@@ -168,13 +162,13 @@ d3.csv('data/Test.csv', function(data) {
   d3.select('svg g.chart')
     .append('text')
     .attr({'id': 'xLabel', 'x': 400, 'y': 670, 'text-anchor': 'middle'})
-    .text(descriptions[xAxis]);
+    .text(xAxis);
 
   d3.select('svg g.chart')
     .append('text')
     .attr('transform', 'translate(-60, 330)rotate(-90)')
     .attr({'id': 'yLabel', 'text-anchor': 'middle'})
-    .text(descriptions[yAxis]);
+    .text(yAxis);
 
   // Render points
   updateScales();
@@ -191,18 +185,10 @@ d3.csv('data/Test.csv', function(data) {
     })
     .attr('r', 4)
     .style('cursor', 'pointer')
-    /*.on('mouseover', function(d) {
-      d3.select('svg g.chart #countryLabel')
-        .text(d.Country)
-        .transition()
-        .style('opacity', 1);
-    })
-    .on('mouseout', function(d) {
-      d3.select('svg g.chart #countryLabel')
-        .transition()
-        .duration(1500)
-        .style('opacity', 0);
-    })*/;
+    .on('click', function() {
+      d=this.__data__;
+      window.open(d["URL"]);
+    });
     $('svg g.chart circle').each(function(){
       $(this).tipsy({ 
         gravity: 's', 
@@ -215,7 +201,7 @@ d3.csv('data/Test.csv', function(data) {
   });
     
 
-  updateChart(true);
+  updateChart(1500);
   //updateMenus();
 
   // Render axes
@@ -235,9 +221,8 @@ d3.csv('data/Test.csv', function(data) {
 
 
   //// RENDERING FUNCTIONS
-  function updateChart(init) {
+  function updateChart(duration) {
     updateScales();
-
     d3.select('svg g.chart')
       .selectAll('circle')
       .transition()
@@ -264,9 +249,9 @@ d3.csv('data/Test.csv', function(data) {
 
     // Update axis labels
     d3.select('#yLabel')
-      .text(descriptions[yAxis]);
+      .text(yAxis);
     d3.select('#xLabel')
-      .text(descriptions[xAxis]);
+      .text(xAxis);
 
     // Update correlation
     var xArray = _.map(data, function(d) {return d[xAxis];});
@@ -295,7 +280,7 @@ d3.csv('data/Test.csv', function(data) {
       .style('opacity', 0)
       .attr({'x1': xScale(x1), 'y1': yScale(y1), 'x2': xScale(x2), 'y2': yScale(y2)})
       .transition()
-      .duration(1500)
+      .duration(duration)
       .style('opacity', 1);
 
   }
@@ -324,13 +309,5 @@ d3.csv('data/Test.csv', function(data) {
       .orient("left")
       .tickFormat(d3.format("")));
   }
-
-  /*function updateMenus() {
-    d3.select('#y-axis-menu')
-      .selectAll('li')
-      .classed('selected', function(d) {
-        return d === yAxis;
-    });
-  }*/
 
 })
