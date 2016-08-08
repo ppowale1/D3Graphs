@@ -64,6 +64,10 @@ li.preview {
   font-weight: 400;
 }
 
+p {
+  line-height: 150%;
+}
+
 /*option.selected {
   font-weight: bold;
 }*/
