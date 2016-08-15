@@ -76,8 +76,8 @@ function getCorrelation(xArray, yArray) {
 
 d3.csv('data/Data.csv', function(data) {
 
-  var keysNum = ["YEAR","PD Capacitance (fF)", "NUMBER OF CHANNELS (Lambda)","TOTAL DATA RATE (Gbps)","DATA RATE PER LANE (Gbps)","TX POWER PER LANE (mW)","RX POWER PER LANE (mW)","TOTAL POWER PER LANE (mW)","TX E/B (fJ/b)","RX E/B (fJ/b)","TOTAL E/B (fJ/b)","RX SENSITIVITY (uA)","PD RESPONSIVITY (A/W)","CHIP AREA (mm^2)"];
-  var keysStr = ["JOURNAL/CONF","AFFILIATION","CHANNEL TYPE","MODULATION TYPE","TECHNOLOGY"];
+  var keysNum = ["YEAR","CMOS NODE (nm)", "PD Capacitance (fF)", "NUMBER OF CHANNELS (Lambda)","TOTAL DATA RATE (Gbps)","DATA RATE PER LANE (Gbps)","TX POWER PER LANE (mW)","RX POWER PER LANE (mW)","TOTAL POWER PER LANE (mW)","TX E/B (fJ/b)","RX E/B (fJ/b)","TOTAL E/B (fJ/b)","RX SENSITIVITY (uA)","PD RESPONSIVITY (A/W)","CHIP AREA (mm^2)", "BANDWIDTH DENSITY (mW/Gbps)"];
+  var keysStr = ["JOURNAL/CONF","AFFILIATION","AUTHORS", "CHANNEL TYPE","MODULATION TYPE","TECHNOLOGY"];
   var keysMeta = ["URL","TITLE","ABSTRACT"];
    
    var xAxisOptions = keysNum;
@@ -193,9 +193,10 @@ d3.csv('data/Data.csv', function(data) {
       $(this).tipsy({ 
         gravity: 's', 
         html: true, 
+        fade: true,
         title: function() {
           var d = this.__data__;
-          return d[group]; 
+          return "<b>"+d[group]+"</b>" +"<br/>" + "<br/>" + d["TITLE"]; 
         }
       });
   });
