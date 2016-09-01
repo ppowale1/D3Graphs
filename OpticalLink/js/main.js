@@ -191,7 +191,7 @@ d3.csv('data/Data.csv', function(data) {
     });
     $('svg g.chart circle').each(function(){
       $(this).tipsy({ 
-        gravity: 's', 
+        gravity: 'n', 
         html: true, 
         fade: true,
         title: function() {
