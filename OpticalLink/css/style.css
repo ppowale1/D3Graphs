@@ -49,8 +49,13 @@ body {
   top: 520px;
 
 }
+#submit {
+  position: absolute;
+  top: 490px;
 
-li, h1, h2, h4 {
+}
+
+li, h1, h2, h3, h4 {
   font-weight: 100;
 }
 
